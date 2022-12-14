@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/MuhammadyusufAdhamov/medium_post_service/storage/repo"
 	"github.com/jmoiron/sqlx"
@@ -166,4 +167,56 @@ func (pr *postRepo) GetAll(params *repo.GetAllPostsParams) (*repo.GetAllPostsRes
 	}
 
 	return &result, nil
+}
+
+func (pr *postRepo) Update(post *repo.Post) (*repo.Post, error) {
+	query := `update posts set
+				title=$1,
+				description=$2,
+				image_url=$3,
+				user_id=$4,
+				category_id=$5
+			where id=$6
+			returning created_at
+			`
+
+	row := pr.db.QueryRow(
+		query,
+		post.Title,
+		post.Description,
+		post.ImageUrl,
+		post.UserID,
+		post.CategoryID,
+		post.ID,
+	)
+
+	err := row.Scan(
+		&post.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (pr *postRepo) Delete(id int64) error {
+	query := `delete from posts where id=$1
+			returning id`
+
+	result, err := pr.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
