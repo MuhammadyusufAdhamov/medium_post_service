@@ -47,7 +47,7 @@ func (lr *likeRepo) CreateOrUpdate(l *repo.Like) error {
 	return nil
 }
 
-func (cr *likeRepo) Get(userID, postID int64) (*repo.Like, error) {
+func (lr *likeRepo) Get(userID, postID int64) (*repo.Like, error) {
 	var result repo.Like
 
 	query := `
@@ -60,7 +60,7 @@ func (cr *likeRepo) Get(userID, postID int64) (*repo.Like, error) {
 		WHERE user_id=$1 AND post_id=$2
 	`
 
-	row := cr.db.QueryRow(query, userID, postID)
+	row := lr.db.QueryRow(query, userID, postID)
 	err := row.Scan(
 		&result.ID,
 		&result.UserID,
@@ -74,7 +74,7 @@ func (cr *likeRepo) Get(userID, postID int64) (*repo.Like, error) {
 	return &result, nil
 }
 
-func (cr *likeRepo) GetLikesDislikesCount(postID int64) (*repo.LikesDislikesCountsResult, error) {
+func (lr *likeRepo) GetLikesDislikesCount(postID int64) (*repo.LikesDislikesCountsResult, error) {
 	var result repo.LikesDislikesCountsResult
 
 	query := `
@@ -85,7 +85,7 @@ func (cr *likeRepo) GetLikesDislikesCount(postID int64) (*repo.LikesDislikesCoun
 		WHERE post_id=$1
 	`
 
-	row := cr.db.QueryRow(query, postID)
+	row := lr.db.QueryRow(query, postID)
 	err := row.Scan(
 		&result.LikesCount,
 		&result.DislikesCount,

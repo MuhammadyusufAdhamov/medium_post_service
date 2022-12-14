@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/MuhammadyusufAdhamov/medium_post_service/storage/repo"
 	"github.com/jmoiron/sqlx"
@@ -16,7 +17,7 @@ func NewComment(db *sqlx.DB) repo.CommentStorageI {
 	}
 }
 
-func (pr *commentRepo) Create(comment *repo.Comment) (*repo.Comment, error) {
+func (cr *commentRepo) Create(comment *repo.Comment) (*repo.Comment, error) {
 	query := `
 		INSERT INTO comments(
 			user_id,
@@ -26,7 +27,7 @@ func (pr *commentRepo) Create(comment *repo.Comment) (*repo.Comment, error) {
 		RETURNING id, created_at
 	`
 
-	row := pr.db.QueryRow(
+	row := cr.db.QueryRow(
 		query,
 		comment.UserID,
 		comment.PostID,
@@ -44,7 +45,7 @@ func (pr *commentRepo) Create(comment *repo.Comment) (*repo.Comment, error) {
 	return comment, nil
 }
 
-func (pr *commentRepo) GetAll(params *repo.GetAllCommentsParams) (*repo.GetAllCommentsResult, error) {
+func (cr *commentRepo) GetAll(params *repo.GetAllCommentsParams) (*repo.GetAllCommentsResult, error) {
 	result := repo.GetAllCommentsResult{
 		Comments: make([]*repo.Comment, 0),
 	}
@@ -79,7 +80,7 @@ func (pr *commentRepo) GetAll(params *repo.GetAllCommentsParams) (*repo.GetAllCo
 		` + filter + `
 		ORDER BY c.created_at desc` + limit
 
-	rows, err := pr.db.Query(query)
+	rows, err := cr.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -111,10 +112,42 @@ func (pr *commentRepo) GetAll(params *repo.GetAllCommentsParams) (*repo.GetAllCo
 	queryCount := `
 		SELECT count(1) FROM comments c
 		INNER JOIN users u ON u.id=c.user_id ` + filter
-	err = pr.db.QueryRow(queryCount).Scan(&result.Count)
+	err = cr.db.QueryRow(queryCount).Scan(&result.Count)
 	if err != nil {
 		return nil, err
 	}
 
 	return &result, nil
+}
+
+func (cr *commentRepo) Update(comment *repo.Comment) (*repo.Comment, error) {
+	query := `update comments set description=$1 where id=$2
+			returning created_at
+			`
+
+	err := cr.db.QueryRow(query, comment.Description, comment.ID).Scan(&comment.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return comment, nil
+}
+
+func (cr *commentRepo) Delete(id int64) error {
+	query := `delete from comments where id=$1`
+
+	result, err := cr.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
