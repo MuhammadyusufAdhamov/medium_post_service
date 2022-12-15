@@ -24,7 +24,6 @@ func (lr *likeRepo) CreateOrUpdate(l *repo.Like) error {
 			INSERT INTO likes(user_id, post_id, status) 
 			VALUES($1, $2, $3) RETURNING id
 		`
-
 		_, err := lr.db.Exec(query, l.UserID, l.PostID, l.Status)
 		if err != nil {
 			return err

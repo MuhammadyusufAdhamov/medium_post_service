@@ -7,7 +7,6 @@ import (
 	"github.com/MuhammadyusufAdhamov/medium_post_service/storage/repo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 type PostService struct {
@@ -43,8 +42,8 @@ func parsePostModel(post *repo.Post) *pb.Post {
 		ImageUrl:    post.ImageUrl,
 		UserId:      post.UserID,
 		CategoryId:  post.CategoryID,
-		CreatedAt:   post.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   post.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:   post.CreatedAt,
+		UpdatedAt:   post.UpdatedAt,
 		ViewsCount:  post.ViewsCount,
 	}
 }
@@ -56,4 +55,54 @@ func (s *PostService) Get(ctx context.Context, req *pb.GetPostRequest) (*pb.Post
 	}
 
 	return parsePostModel(post), nil
+}
+
+func (s *PostService) GetAll(ctx context.Context, req *pb.GetAllPostsRequest) (*pb.GetAllPostsResponse, error) {
+	result, err := s.storage.Post().GetAll(&repo.GetAllPostsParams{
+		Limit:  req.Limit,
+		Page:   req.Page,
+		Search: req.Search,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Internal server error: %v", err)
+	}
+
+	response := pb.GetAllPostsResponse{
+		Count: result.Count,
+		Posts: make([]*pb.Post, 0),
+	}
+
+	for _, post := range result.Posts {
+		response.Posts = append(response.Posts, parsePostModel(post))
+	}
+
+	return &response, nil
+}
+
+func (s *PostService) Update(ctx context.Context, req *pb.Post) (*pb.Post, error) {
+	user, err := s.storage.Post().Update(&repo.Post{
+		ID:          req.Id,
+		Title:       req.Title,
+		Description: req.Description,
+		ImageUrl:    req.ImageUrl,
+		UserID:      req.UserId,
+		CategoryID:  req.CategoryId,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
+		ViewsCount:  req.ViewsCount,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Internal server error: %v", err)
+	}
+
+	return parsePostModel(user), nil
+}
+
+func (s *PostService) Delete(ctx context.Context, req *pb.GetPostRequest) error {
+	err := s.storage.Post().Delete(req.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

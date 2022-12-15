@@ -22,6 +22,7 @@ type GetAllCommentsParams struct {
 	Page   int32
 	UserID int64
 	PostID int64
+	Search string
 }
 
 type GetAllCommentsResult struct {
@@ -32,4 +33,6 @@ type GetAllCommentsResult struct {
 type CommentStorageI interface {
 	Create(c *Comment) (*Comment, error)
 	GetAll(params *GetAllCommentsParams) (*GetAllCommentsResult, error)
+	Update(c *Comment) (*Comment, error)
+	Delete(id int64) error
 }

@@ -1,7 +1,5 @@
 package repo
 
-import "time"
-
 type Post struct {
 	ID          int64
 	Title       string
@@ -9,8 +7,8 @@ type Post struct {
 	ImageUrl    string
 	UserID      int64
 	CategoryID  int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt   string
+	UpdatedAt   string
 	ViewsCount  int32
 }
 
@@ -32,4 +30,6 @@ type PostStorageI interface {
 	Create(u *Post) (*Post, error)
 	Get(id int64) (*Post, error)
 	GetAll(params *GetAllPostsParams) (*GetAllPostsResult, error)
+	Update(p *Post) (*Post, error)
+	Delete(id int64) error
 }
