@@ -6,8 +6,10 @@ import (
 )
 
 type Config struct {
-	GrpcPort string
-	Postgres PostgresConfig
+	GrpcPort            string
+	UserServiceHost     string
+	UserServiceGrpcPort string
+	Postgres            PostgresConfig
 }
 
 type PostgresConfig struct {
@@ -25,7 +27,9 @@ func Load(path string) Config {
 	conf.AutomaticEnv()
 
 	cfg := Config{
-		GrpcPort: conf.GetString("GRPC_PORT"),
+		GrpcPort:            conf.GetString("GRPC_PORT"),
+		UserServiceHost:     conf.GetString("USER_SERVICE_HOST"),
+		UserServiceGrpcPort: conf.GetString("USER_SERVICE_GRPC_PORT"),
 		Postgres: PostgresConfig{
 			Host:     conf.GetString("POSTGRES_HOST"),
 			Port:     conf.GetString("POSTGRES_PORT"),

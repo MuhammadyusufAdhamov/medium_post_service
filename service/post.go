@@ -97,12 +97,3 @@ func (s *PostService) Update(ctx context.Context, req *pb.Post) (*pb.Post, error
 
 	return parsePostModel(user), nil
 }
-
-func (s *PostService) Delete(ctx context.Context, req *pb.GetPostRequest) error {
-	err := s.storage.Post().Delete(req.Id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
