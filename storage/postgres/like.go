@@ -17,33 +17,33 @@ func NewLike(db *sqlx.DB) repo.LikeStorageI {
 	}
 }
 
-func (lr *likeRepo) CreateOrUpdate(l *repo.Like) error {
-	like, err := lr.Get(l.UserID, l.PostID)
+func (lr *likeRepo) CreateOrUpdate(like *repo.Like) (*repo.Like, error) {
+	like, err := lr.Get(like.UserID, like.PostID)
 	if errors.Is(err, sql.ErrNoRows) {
 		query := `
 			INSERT INTO likes(user_id, post_id, status) 
 			VALUES($1, $2, $3) RETURNING id
 		`
-		_, err := lr.db.Exec(query, l.UserID, l.PostID, l.Status)
+		_, err := lr.db.Exec(query, like.UserID, like.PostID, like.Status)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else if like != nil {
-		if like.Status == l.Status {
+		if like.Status == like.Status {
 			_, err := lr.db.Exec(`DELETE FROM likes WHERE id=$1`, like.ID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		} else {
 			query := `UPDATE likes SET status=$1 WHERE id=$2`
-			_, err := lr.db.Exec(query, l.Status, like.ID)
+			_, err := lr.db.Exec(query, like.Status, like.ID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
-	return nil
+	return like, nil
 }
 
 func (lr *likeRepo) Get(userID, postID int64) (*repo.Like, error) {

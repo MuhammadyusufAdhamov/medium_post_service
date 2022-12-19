@@ -41,7 +41,7 @@ func main() {
 
 	postService := service.NewPostService(strg)
 	categoryService := service.NewCategoryService(strg, log)
-	likeService := service.NewLikeService(strg, log)
+	likeService := service.NewLikeService(&strg, log)
 	commentService := service.NewCommentService(strg, grpcConn, log)
 
 	lis, err := net.Listen("tcp", cfg.GrpcPort)

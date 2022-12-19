@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	pb "github.com/MuhammadyusufAdhamov/medium_post_service/genproto/post_service"
 	"github.com/MuhammadyusufAdhamov/medium_post_service/storage"
 	"github.com/MuhammadyusufAdhamov/medium_post_service/storage/repo"
@@ -87,11 +89,11 @@ func (s *PostService) Update(ctx context.Context, req *pb.Post) (*pb.Post, error
 		ImageUrl:    req.ImageUrl,
 		UserID:      req.UserId,
 		CategoryID:  req.CategoryId,
-		CreatedAt:   req.CreatedAt,
-		UpdatedAt:   req.UpdatedAt,
-		ViewsCount:  req.ViewsCount,
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		}
 		return nil, status.Errorf(codes.Internal, "Internal server error: %v", err)
 	}
 

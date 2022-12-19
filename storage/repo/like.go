@@ -13,7 +13,7 @@ type LikesDislikesCountsResult struct {
 }
 
 type LikeStorageI interface {
-	CreateOrUpdate(l *Like) error
+	CreateOrUpdate(like *Like) (*Like, error)
 	Get(userID, postID int64) (*Like, error)
 	GetLikesDislikesCount(postID int64) (*LikesDislikesCountsResult, error)
 }

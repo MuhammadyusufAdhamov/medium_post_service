@@ -8,7 +8,6 @@ package post_service
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,11 +22,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LikeServiceClient interface {
-	Create(ctx context.Context, in *Like, opts ...grpc.CallOption) (*Like, error)
+	CreateOrUpdate(ctx context.Context, in *Like, opts ...grpc.CallOption) (*Like, error)
 	Get(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*Like, error)
-	GetAll(ctx context.Context, in *GetAllLikesRequest, opts ...grpc.CallOption) (*GetAllLikesResponse, error)
-	Update(ctx context.Context, in *Like, opts ...grpc.CallOption) (*Like, error)
-	Delete(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetLikeDislikeCount(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*LikesDislikesCountResponse, error)
 }
 
 type likeServiceClient struct {
@@ -38,9 +35,9 @@ func NewLikeServiceClient(cc grpc.ClientConnInterface) LikeServiceClient {
 	return &likeServiceClient{cc}
 }
 
-func (c *likeServiceClient) Create(ctx context.Context, in *Like, opts ...grpc.CallOption) (*Like, error) {
+func (c *likeServiceClient) CreateOrUpdate(ctx context.Context, in *Like, opts ...grpc.CallOption) (*Like, error) {
 	out := new(Like)
-	err := c.cc.Invoke(ctx, "/genproto.LikeService/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/genproto.LikeService/CreateOrUpdate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,27 +53,9 @@ func (c *likeServiceClient) Get(ctx context.Context, in *GetLikeRequest, opts ..
 	return out, nil
 }
 
-func (c *likeServiceClient) GetAll(ctx context.Context, in *GetAllLikesRequest, opts ...grpc.CallOption) (*GetAllLikesResponse, error) {
-	out := new(GetAllLikesResponse)
-	err := c.cc.Invoke(ctx, "/genproto.LikeService/GetAll", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *likeServiceClient) Update(ctx context.Context, in *Like, opts ...grpc.CallOption) (*Like, error) {
-	out := new(Like)
-	err := c.cc.Invoke(ctx, "/genproto.LikeService/Update", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *likeServiceClient) Delete(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
-	out := new(empty.Empty)
-	err := c.cc.Invoke(ctx, "/genproto.LikeService/Delete", in, out, opts...)
+func (c *likeServiceClient) GetLikeDislikeCount(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*LikesDislikesCountResponse, error) {
+	out := new(LikesDislikesCountResponse)
+	err := c.cc.Invoke(ctx, "/genproto.LikeService/GetLikeDislikeCount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,11 +66,9 @@ func (c *likeServiceClient) Delete(ctx context.Context, in *GetLikeRequest, opts
 // All implementations must embed UnimplementedLikeServiceServer
 // for forward compatibility
 type LikeServiceServer interface {
-	Create(context.Context, *Like) (*Like, error)
+	CreateOrUpdate(context.Context, *Like) (*Like, error)
 	Get(context.Context, *GetLikeRequest) (*Like, error)
-	GetAll(context.Context, *GetAllLikesRequest) (*GetAllLikesResponse, error)
-	Update(context.Context, *Like) (*Like, error)
-	Delete(context.Context, *GetLikeRequest) (*empty.Empty, error)
+	GetLikeDislikeCount(context.Context, *GetLikeRequest) (*LikesDislikesCountResponse, error)
 	mustEmbedUnimplementedLikeServiceServer()
 }
 
@@ -99,20 +76,14 @@ type LikeServiceServer interface {
 type UnimplementedLikeServiceServer struct {
 }
 
-func (UnimplementedLikeServiceServer) Create(context.Context, *Like) (*Like, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+func (UnimplementedLikeServiceServer) CreateOrUpdate(context.Context, *Like) (*Like, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrUpdate not implemented")
 }
 func (UnimplementedLikeServiceServer) Get(context.Context, *GetLikeRequest) (*Like, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedLikeServiceServer) GetAll(context.Context, *GetAllLikesRequest) (*GetAllLikesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAll not implemented")
-}
-func (UnimplementedLikeServiceServer) Update(context.Context, *Like) (*Like, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
-}
-func (UnimplementedLikeServiceServer) Delete(context.Context, *GetLikeRequest) (*empty.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+func (UnimplementedLikeServiceServer) GetLikeDislikeCount(context.Context, *GetLikeRequest) (*LikesDislikesCountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLikeDislikeCount not implemented")
 }
 func (UnimplementedLikeServiceServer) mustEmbedUnimplementedLikeServiceServer() {}
 
@@ -127,20 +98,20 @@ func RegisterLikeServiceServer(s grpc.ServiceRegistrar, srv LikeServiceServer) {
 	s.RegisterService(&LikeService_ServiceDesc, srv)
 }
 
-func _LikeService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LikeService_CreateOrUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Like)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LikeServiceServer).Create(ctx, in)
+		return srv.(LikeServiceServer).CreateOrUpdate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/genproto.LikeService/Create",
+		FullMethod: "/genproto.LikeService/CreateOrUpdate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LikeServiceServer).Create(ctx, req.(*Like))
+		return srv.(LikeServiceServer).CreateOrUpdate(ctx, req.(*Like))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -163,56 +134,20 @@ func _LikeService_Get_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LikeService_GetAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllLikesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LikeServiceServer).GetAll(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/genproto.LikeService/GetAll",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LikeServiceServer).GetAll(ctx, req.(*GetAllLikesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LikeService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Like)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LikeServiceServer).Update(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/genproto.LikeService/Update",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LikeServiceServer).Update(ctx, req.(*Like))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LikeService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _LikeService_GetLikeDislikeCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetLikeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LikeServiceServer).Delete(ctx, in)
+		return srv.(LikeServiceServer).GetLikeDislikeCount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/genproto.LikeService/Delete",
+		FullMethod: "/genproto.LikeService/GetLikeDislikeCount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LikeServiceServer).Delete(ctx, req.(*GetLikeRequest))
+		return srv.(LikeServiceServer).GetLikeDislikeCount(ctx, req.(*GetLikeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -225,24 +160,16 @@ var LikeService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*LikeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Create",
-			Handler:    _LikeService_Create_Handler,
+			MethodName: "CreateOrUpdate",
+			Handler:    _LikeService_CreateOrUpdate_Handler,
 		},
 		{
 			MethodName: "Get",
 			Handler:    _LikeService_Get_Handler,
 		},
 		{
-			MethodName: "GetAll",
-			Handler:    _LikeService_GetAll_Handler,
-		},
-		{
-			MethodName: "Update",
-			Handler:    _LikeService_Update_Handler,
-		},
-		{
-			MethodName: "Delete",
-			Handler:    _LikeService_Delete_Handler,
+			MethodName: "GetLikeDislikeCount",
+			Handler:    _LikeService_GetLikeDislikeCount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
